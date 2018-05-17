@@ -4,11 +4,11 @@ class Story():
     A story is composed of a name, an id, net computable area and net non-computable area
     Each building has multiple stories"""
 
-    def __init__(self, id, name):
+    def __init__(self, id, name, area_comp=0.0, area_ncomp=0.0):
         self.id = id
         self.name = name
-        self.area_comp = 0.0
-        self.area_ncomp = 0.0
+        self.area_comp = area_comp
+        self.area_ncomp = area_ncomp
 
 
     def add_area(self, area, category):

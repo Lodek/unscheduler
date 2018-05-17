@@ -3,9 +3,9 @@ class Building():
     """ Abstraction for a building plan from Archicad.
     A building plan can be thought of as a group of areas and stories. """
     
-    def __init__(self):
-        self.model = ''
-        self._stories = []
+    def __init__(self, model='', stories=[]):
+        self.model = model
+        self._stories = stories
         self.area_comp = 0.0
         self.area_ncomp = 0.0
         self.area_proj = 0.0
@@ -13,20 +13,24 @@ class Building():
         self._calc_area_proj()
 
     @classmethod
-    def get_from_text(cls, f):
+    def get_from_text(cls, model, txt):
         """ Construct a Building object from a text file
         It parses the text file, retrieves the Story objects associated to it
         and does the nescessary computations to initialize the Building object """
-        self = cls()
-        table = ArchicadTableParser(f)
-        self._stories = [Story(id=i, name=story_name) for i, story_name in enumerate(table.stories)]
-
+        table = MrBuildingTable(txt)
+        stories = {name : Story(id=i, name=name) for i, name in enumerate(table.story_name)}
+        for record in table.records:
+            stories[record.story_name].add_area(record.area, record.category)
+        stories = [story for story in stories.values()]
+        stories = sorted(stories, key=lambda story: story.id)
+        self = cls(model, stories)
+        return self
 
     def _calc_area_proj(self):
         """ Iterates over stories to find the Projection Area """
         areas = [story.area_comp for story in self._stories]
         return max(areas)
-    
+
     @property
     def stories(self):
         """ Returns an iterator that iterates over Story objects in Building """

@@ -1,0 +1,6 @@
+\documentclass[11pt]{{article}}
+\begin{{document}}
+\begin{{tabular}}{{ccc}}
+{}
+\end{{tabular}}
+\end{{document}}

@@ -1,7 +1,7 @@
 import configparser, argparse, re, pdb
 from pathlib import Path
 from parser import BuildingParser, SubplotParser
-from tables import BuildingTable, SubplotBuildingTable, SubplotTable, LotTable
+from tables import StoryTable, BuildingTable, SubplotBuildingTable, SubplotTable, LotTable
 from land import Lot
 
 def main():
@@ -16,15 +16,18 @@ def main():
     subplots = SubplotParser(subplot_paths, building_dict).subplots
     lot = Lot(subplots, project_info['lot'])
     lot.calc_all()
+    story_tables = [StoryTable(story, root) for story in lot.stories]
     building_tables = [BuildingTable(building, root) for building in buildings if building.model is not 'null']
-    subplot_building_table = SubplotBuildingTable(subplots, root)
-    subplot_table = SubplotTable(subplots, root)
-#    lot_table = LotTable(lot, root)
+    subplot_building_table = SubplotBuildingTable(lot, root)
+    subplot_table = SubplotTable(subplots, lot, root)
+    lot_table = LotTable(lot, root)
+    for table in story_tables:
+        table.write_latex()
     for table in building_tables:
         table.write_latex()
-    #subplot_building_table.write_latex()
+    subplot_building_table.write_latex()
     subplot_table.write_latex()
-#    lot_table.write_latex()
+    lot_table.write_latex()
     #fin
 
     

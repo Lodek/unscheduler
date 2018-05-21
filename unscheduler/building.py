@@ -1,4 +1,6 @@
-
+""" 
+The module contains memes.
+"""
 class Building():
     """ Abstraction for a building plan from Archicad.
     A building plan can be thought of as a group of areas and stories. """
@@ -24,7 +26,11 @@ class Building():
     
     def __getitem__(self, key):
         """ Returns the Story object by index """
-        return self.stories[key]
+        try:
+            value = self.stories[key]
+        except IndexError:
+            value = Story(key, 'out-of-range')
+        return value
 
     def __len__(self):
         """ Number of stories in building """

@@ -1,3 +1,5 @@
+import pdb
+from building import Story
 
 class Land():
     """ Base class for a piece of Land. 
@@ -46,6 +48,7 @@ class Lot(Land):
         self.rec_ncov = 0.0
         self.rec_cov = 0.0
         self.rec_net = 0.0
+        self.stories = []
         self.subplots = subplots
         for key, value in project_info.items():
             setattr(self, key, value)
@@ -56,8 +59,22 @@ class Lot(Land):
         self.area_comp = sum([subplot.area_comp for subplot in self.subplots])
         self.area_ncomp = sum([subplot.area_ncomp for subplot in self.subplots])
         self.area_proj = sum([subplot.area_proj for subplot in self.subplots])
+        self.rec_net = self.rec_ncov + self.rec_cov
+        self.stories = self._calc_stories()
         super().calc_all()
 
+    def _calc_stories(self):
+        """ Creates story objects for lot based on the stories of all buildings.
+        Story object has total area per story for all subplots. """
+        buildings = [subplot.building for subplot in self.subplots]
+        max_story = max([len(building) for building in buildings])
+        story_names = [story.name for story in next(filter(lambda obj : len(obj) == max_story, buildings)).stories]
+        stories = [Story(i, name) for i, name in enumerate(story_names)]
+        for i, story in enumerate(stories):
+            story.area_comp = sum([building[i].area_comp for building in buildings])
+            story.area_ncomp = sum([building[i].area_ncomp for building in buildings])
+        return stories
+        
     def __len__(self):
         """ Returns the ammount of subplots """
         return len(self.subplots)

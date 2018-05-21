@@ -1,4 +1,9 @@
-import numpy as np
+"""
+Module contains classes responsible for parsing the table files. 
+A Parser object returns object(s) which are abstraction of architectural
+entities existing in the project, such as buildings, subplots or a lot.
+"""
+
 import collections, re
 from land import Lot, Subplot
 from building import Story, Building
@@ -14,7 +19,7 @@ class BaseParser():
 
     def floatifier(self, attributes):
         """Generator that iterates over rows in texble and converts each element
-        to either a float, an int or keeps it as a string. Choice is made through a regex. 
+        to either a float or keeps it as a string. Choice is made through a regex. 
         Yields a namedtuple whose attributes are the same as the passed as parameter"""
         Record = collections.namedtuple('Record', attributes)
         is_float = lambda element : True if re.search(r'^\d+\.\d+$', element) else False
@@ -80,9 +85,11 @@ class SubplotParser(BaseParser):
     def _creator(self):
         """ Constructs instances of subplots according to the subplot_definitions """
         subplots = {id : Subplot(id, name, area) for id, name, area in self.defines_table}
+        for id, subplot in subplots.items():
+            subplot.building = self.building_dict[id]
+            subplot.calc_all()
         for id, area in self.perm_table:
             subplots[id].area_perm = area
-            subplots[id].building = self.building_dict[id]
             subplots[id].calc_all()
         subplots = list(subplots.values())
         subplots = sorted(subplots, key=lambda subplot: subplot.id)

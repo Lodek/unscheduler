@@ -64,5 +64,5 @@ class Story():
 
     def __repr__(self):
         str = 'ID: {}, Name: {}, Area_C: {:.2f}m2, Area_NC: {:.2f}m2'
-        str = str.format(self.id, self.name, self.computable_area, self.non_computable_area)
+        str = str.format(self.id, self.name, self.area_comp, self.area_ncomp)
         return str

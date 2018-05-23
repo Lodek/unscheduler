@@ -156,9 +156,9 @@ class SubplotTable(BaseBuilder):
         total = ['TOTAL']
         total.append('${:.2f}$ m$^2$'.format(self.lot.area_proj))
         total.append('${:.2f}$ m$^2$'.format(self.lot.area_net))
-        total.append('${:.2f}$ m$^2$'.format(self.lot.taxa_ocp))
+        total.append('${:.2f}$\%'.format(self.lot.taxa_ocp))
         total.append('${:.2f}$'.format(self.lot.coef_aprov))
-        total.append('${:.2f}$'.format(self.lot.area_perm))
+        total.append('${:.2f}$ m$^2$'.format(self.lot.area_perm))
         total.append('${:.2f}$\%'.format(self.lot.taxa_perm))
         return total
     
@@ -168,7 +168,7 @@ class SubplotTable(BaseBuilder):
         row.append('${:.2f}$ m$^2$'.format(subplot.area_net))
         row.append('${:.2f}$\%'.format(subplot.taxa_ocp))
         row.append('${:.2f}$'.format(subplot.coef_aprov))
-        row.append('${:.2f}$'.format(subplot.area_perm))
+        row.append('${:.2f}$ m$^2$'.format(subplot.area_perm))
         row.append('${:.2f}$\%'.format(subplot.taxa_perm))
         return row
 

@@ -21,12 +21,12 @@ class Land():
 
     def calc_taxa_perm(self):
         """ Calculates the Land's permeability rate """
-        rate = self.area_perm / self.area_net
+        rate = (self.area_perm / self.area_net) * 100.0
         return rate
 
     def calc_taxa_ocp(self):
         """ Calculates the Land's ocp rate """
-        rate = self.area_proj / self.area_net
+        rate = (self.area_proj / self.area_net)*100.0
         return rate
 
     def calc_all(self):

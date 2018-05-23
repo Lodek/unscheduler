@@ -14,27 +14,30 @@ class BaseParser():
     returns the objects matching the data"""
     def parse_txt(self, txt, attributes):
         self._texble = [line[:-1].split('\t') for line in txt.split('\n')][1:-1]
-        table = list(self.floatifier(attributes))
+        table = list(self.caster(attributes))
         return table
 
-    def floatifier(self, attributes):
+    def caster(self, attributes):
         """Generator that iterates over rows in texble and converts each element
         to either a float or keeps it as a string. Choice is made through a regex. 
         Yields a namedtuple whose attributes are the same as the passed as parameter"""
         Record = collections.namedtuple('Record', attributes)
         is_float = lambda element : True if re.search(r'^\d+\.\d+$', element) else False
+        is_int = lambda element : True if re.search(r'^\d+$', element) else False
         for row in self._texble:
             new_row = []
             for element in row:
                 if is_float(element):
                     new_element = float(element)
+                elif is_int(element):
+                    new_element = int(element)
                 else:
                     new_element = element
                 new_row.append(new_element)
             record = Record(*new_row)
             yield record
             
-        
+            
 class BuildingParser(BaseParser):
     """ Parser for an archicad building table """
     def __init__(self, paths):
@@ -51,7 +54,7 @@ class BuildingParser(BaseParser):
         null_story = Story(0, 'null')
         buildings = [Building('null', [null_story])]
         for table, path in zip(self.tables, self.paths):
-            storie_names = set([record.story for record in table])
+            storie_names = self._unique_list([record.story for record in table])
             stories = {story : Story(id=i, name=story) for i, story in enumerate(storie_names)}
             for record in table:
                 stories[record.story].add_area(record.area, record.category)
@@ -60,6 +63,13 @@ class BuildingParser(BaseParser):
             model = path.name.replace(path.suffix, '')
             buildings.append(Building(model, stories))
         return buildings
+
+    def _unique_list(self, l):
+        temp = []
+        for i in l:
+            if i not in temp:
+                temp.append(i)
+        return temp
         
 class SubplotParser(BaseParser):
     """ Parser for subplots """

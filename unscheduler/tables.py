@@ -9,7 +9,7 @@ class BaseBuilder():
     """ Base class for Table classes."""
 
     #temporary assumption of where templates will reside
-    template_root = Path(__file__).parent / '..' / 'templates'    
+    template_root = Path(__file__).parent / '..' / 'templates'
 
     def __init__(self):
         """ Outlines attributes needed by the methods implemented in BaseBuilder.
@@ -187,9 +187,9 @@ class LotTable(BaseBuilder):
         
     def build_tabular(self):
         headers = ['ESTATISTICAS', '']
-        matrix = [['AREA DO LOTE ORIGINAL', '${:.2f}$ m$^2$'.format(self.lot.area_lot)]]
-        matrix.append(['AREA ANTIGIDA DO LOTE', '${:.2f}$ m$^2$'.format(self.lot.area_useless)])
-        matrix.append(['AREA DO LOTE REAL', '${:.2f}$ m$^2$'.format(self.lot.area_net)])
+        matrix = [['AREA DO LOTE', '${:.2f}$ m$^2$'.format(self.lot.area_lot)]]
+        matrix.append(['AREA DO LOTE ATINGIDA', '${:.2f}$ m$^2$'.format(self.lot.area_useless)])
+        matrix.append(['AREA DO LOTE REMANESCENTE', '${:.2f}$ m$^2$'.format(self.lot.area_net)])
         matrix.append(['AREA TOTAL COMPUTAVEL', '${:.2f}$ m$^2$'.format(self.lot.area_comp)])
         matrix.append(['AREA TOTAL NAO COMPUTAVEL', '${:.2f}$ m$^2$'.format(self.lot.area_ncomp)])
         matrix.append(['AREA PROJECAO', '${:.2f}$ m$^2$'.format(self.lot.area_proj)])

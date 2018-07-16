@@ -1,5 +1,0 @@
-Home Story	Zone Category Code	Calculated Area	
-TERREO	C	48.88	
-PAV. SUPERIOR	C	52.84	
-PAV. SUPERIOR	NC	2.94	
-ATICO	NC	15.35	

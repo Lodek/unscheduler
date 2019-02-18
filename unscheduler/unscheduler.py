@@ -8,10 +8,11 @@ from worker import Charlie
 def main():
     args = parse_arguments()
     root = Path(args.directory)
-    out = Path(args.output)
-    paths = [path for path in root.iterdir() if path.is_file()]
-    building_paths = [path for path in paths if 'subplot' not in path.name and path.suffix == '.txt']
-    subplot_paths = [path for path in paths if 'subplot' in path.name and path.suffix == '.txt']
+    schedules = root / 'publisher' / 'schedules'
+    out = root / 'publisher' / 'unscheduler'
+    paths = [path for path in schedules.iterdir() if path.is_file()]
+    building_paths = [path for path in paths if 'res' in path.name or 'r2' in path.name or 'rec' in path.name]
+    subplot_paths = [path for path in paths if path not in building_paths]
     project_info = get_info(root)
     lot_dict = {key : caster(value) for key, value in project_info['lot'].items()}
     buildings = BuildingParser(building_paths).buildings
@@ -43,8 +44,7 @@ def construct_dict(project_info, buildings):
     
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument('directory', default='.', help='Directory for unscheduler. Directory must contain the schedules outlined by the documentation')
-    parser.add_argument('-o', '--output', default='.', help='Output directory for unscheduler. Pdf files will be written to it')
+    parser.add_argument('directory', default='.', help='Root directory of project. Must follow the expected folder structure')
     return parser.parse_args()
 
 def caster(element):
@@ -60,7 +60,7 @@ def caster(element):
     
 
 def get_info(root):
-    path = root / 'project-info.ini'
+    path = root / 'config.ini'
     config = configparser.ConfigParser()
     config.read(path)
     return config

@@ -22,13 +22,14 @@ class BaseParser():
         to either a float or keeps it as a string. Choice is made through a regex. 
         Yields a namedtuple whose attributes are the same as the passed as parameter"""
         Record = collections.namedtuple('Record', attributes)
-        is_float = lambda element : True if re.search(r'^\d+\.\d+$', element) else False
+        is_float = lambda element : True if re.search(r'^[\d,]+\.\d+$', element) else False
         is_int = lambda element : True if re.search(r'^\d+$', element) else False
         for row in self._texble:
             new_row = []
             for element in row:
                 if is_float(element):
-                    new_element = float(element)
+                    s = re.sub(',', '', element)
+                    new_element = float(s)
                 elif is_int(element):
                     new_element = int(element)
                 else:
@@ -81,13 +82,13 @@ class SubplotParser(BaseParser):
         self.subplots = self._creator()
 
     def _parse_defines_table(self):
-        path = next(filter(lambda path : path.name == 'subplot-defines.txt', self.paths))
+        path = next(filter(lambda path : path.name == '_sublotes.txt', self.paths))
         attributes = ('id', 'name', 'area')
         table = self.parse_txt(path.read_text(), attributes)
         return table
 
     def _parse_perm_table(self):
-        path = next(filter(lambda path : path.name == 'subplot-perm.txt', self.paths))
+        path = next(filter(lambda path : path.name == '_area-perm.txt', self.paths))
         attributes = ('id', 'area')
         table = self.parse_txt(path.read_text(), attributes)
         return table

@@ -1,44 +1,4 @@
-"""
-Module contains classes responsible for parsing the table files. 
-A Parser object returns object(s) which are abstraction of architectural
-entities existing in the project, such as buildings, subplots or a lot.
-"""
 
-import collections, re
-from land import Lot, Subplot
-from building import Story, Building
-import pdb
-
-class BaseParser():
-    """ Receives a file object for an archicad building text schedule 
-    returns the objects matching the data"""
-    def parse_txt(self, txt, attributes):
-        self._texble = [line[:-1].split('\t') for line in txt.split('\n')][1:-1]
-        table = list(self.caster(attributes))
-        return table
-
-    def caster(self, attributes):
-        """Generator that iterates over rows in texble and converts each element
-        to either a float or keeps it as a string. Choice is made through a regex. 
-        Yields a namedtuple whose attributes are the same as the passed as parameter"""
-        Record = collections.namedtuple('Record', attributes)
-        is_float = lambda element : True if re.search(r'^[\d,]+\.\d+$', element) else False
-        is_int = lambda element : True if re.search(r'^\d+$', element) else False
-        for row in self._texble:
-            new_row = []
-            for element in row:
-                if is_float(element):
-                    s = re.sub(',', '', element)
-                    new_element = float(s)
-                elif is_int(element):
-                    new_element = int(element)
-                else:
-                    new_element = element
-                new_row.append(new_element)
-            record = Record(*new_row)
-            yield record
-            
-            
 class BuildingParser(BaseParser):
     """ Parser for an archicad building table """
     def __init__(self, paths):

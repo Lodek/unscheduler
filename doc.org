@@ -1,0 +1,20 @@
+* folder structure
+** project root
+- *.pln
+** pub
+*** schedules
+- *.txt
+*** unscheduler
+- *.pdf
+*** pdf
+*** dwg
+* todo
+- write tests for mah boy Parser
+- Go over Building
+- write building factory
+
+
+* Stuff
+- Todo projeto tem um lote e pelo menos um sublote. Caso seja habitacao coletiva ainda havera um sublote cuja area total é igual à área do lote.
+- Meaning there must be a subplot thingy diagram for it to export. Numerate it as subplot 1 and get it's a wrap
+- 

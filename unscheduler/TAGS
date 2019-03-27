@@ -1,0 +1,83 @@
+
+building.py,286
+class Building(4,36
+    def __init__(8,189
+    def _calc_area_proj(17,437
+    def _calc_net_area(22,668
+    def __getitem__(27,938
+    def __len__(35,1167
+    def __repr__(39,1274
+class Story(45,1475
+    def __init__(50,1655
+    def add_area(56,1839
+    def __repr__(65,2124
+
+land.py,387
+class Land(4,39
+    def __init__(7,159
+    def calc_coef_aprov(17,416
+    def calc_taxa_perm(22,571
+    def calc_taxa_ocp(27,734
+    def calc_all(32,885
+class Lot(39,1124
+    def __init__(43,1250
+    def calc_all(56,1636
+    def _calc_stories(66,2179
+    def __len__(78,2929
+class Subplot(82,3035
+    def __init__(84,3057
+    def calc_all(91,3264
+    def __repr__(97,3473
+
+parser.py,373
+class BaseParser(12,322
+    def parse_txt(16,539
+    def caster(30,1104
+class BuildingParser(51,2083
+    def __init__(53,2167
+    def _parse_tables(58,2310
+    def _creator(63,2500
+    def _unique_list(77,3206
+class SubplotParser(84,3365
+    def __init__(86,3430
+    def _parse_defines_table(93,3695
+    def _parse_perm_table(99,3948
+    def _creator(105,4187
+
+tables.py,651
+class BaseBuilder(7,184
+    def __init__(14,373
+    def tabularfy(27,988
+    def format_row(44,1731
+    def latexfy(51,2008
+    def write_latex(59,2330
+class BuildingTable(65,2506
+    def __init__(69,2620
+    def build_tabular(77,3005
+class SubplotBuildingTable(87,3567
+    def __init__(88,3608
+    def build_tabular(97,4027
+class SubplotTable(132,5536
+    def __init__(136,5658
+    def build_tabular(145,6050
+    def _gen_total(155,6538
+    def _gen_row(165,6997
+class LotTable(176,7443
+    def __init__(180,7553
+    def build_tabular(188,7902
+class StoryTable(207,9304
+    def __init__(211,9396
+    def build_tabular(219,9769
+
+unscheduler.py,115
+def main(8,253
+def construct_dict(39,1594
+def parse_arguments(44,1852
+def caster(50,2227
+def get_info(62,2604
+
+worker.py,89
+class Charlie(4,53
+    def __init__(5,70
+    def find_tex(10,242
+    def work(13,357

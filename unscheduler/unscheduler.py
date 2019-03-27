@@ -4,18 +4,51 @@ from parser import BuildingParser, SubplotParser
 from tables import StoryTable, BuildingTable, SubplotBuildingTable, SubplotTable, LotTable
 from land import Lot
 from worker import Charlie
+from parsers import caster
+
 
 def main():
-    args = parse_arguments()
-    root = Path(args.directory)
+    root = Path(parse_arguments().directory).absolute()
     schedules = root / 'publisher' / 'schedules'
     out = root / 'publisher' / 'unscheduler'
-    paths = [path for path in schedules.iterdir() if path.is_file()]
-    building_paths = [path for path in paths if 'res' in path.name or 'r2' in path.name or 'rec' in path.name]
-    subplot_paths = [path for path in paths if path not in building_paths]
-    project_info = get_info(root)
+    defs = get_dict()
+
+    buildings = []
+    for model in defs['buildings'].split():
+        p = schedules / '{}.txt'.format(model)
+        buildings.append(BuildingFactory.get_building(model, p.read_text()))
+    buildings.append(BuildingFactory.null_building())
+
+    relations_dict = {caster(id) : buildings.split() for id, buildings in defs['relations'].items()}
+
+    suplots_path = schedules / 'subplots.txt'
+    perm_path = schedules / 'area_perm.txt'
+    subplots = SubplotFactory.get_subplots(subplots_path.read_text(),
+                                           perm_path.read_text(),
+                                           buildings, relations_dict)
+
+    project_info = {attr : caster(value) for attr, value in defs['project_info'].items()}
+    lot = Lot(subplots, project_info)
+
+    
+    
+
+        
+    
+    
+
+
+def main():
+    root = Path(parse_arguments().directory)
+    configs = get_info(root)
+    schedules = root / 'publisher' / 'schedules'
+    out = root / 'publisher' / 'unscheduler'
+
+    building_paths = [p for p in schedules.iterdir() if p.name in configs['buildings']]
+    buildings = BuildingParser(building_paths).buildings #for the love of, change parser to receive a TEXT instead of a list of paths
+
+    subplot_paths = [path for path in paths if path not in building_paths] #wtf is this?
     lot_dict = {key : caster(value) for key, value in project_info['lot'].items()}
-    buildings = BuildingParser(building_paths).buildings
     building_dict = construct_dict(project_info, buildings)
     subplots = SubplotParser(subplot_paths, building_dict).subplots
     lot = Lot(subplots, lot_dict)
@@ -37,28 +70,12 @@ def main():
     #fin
 
     
-def construct_dict(project_info, buildings):
-    base_dict = project_info['subplot_mapper']
-    building_dict = {int(key) : next(filter(lambda building : value == building.model, buildings)) for key, value in base_dict.items()}
-    return building_dict
-    
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('directory', default='.', help='Root directory of project. Must follow the expected folder structure')
     return parser.parse_args()
 
-def caster(element):
-    is_float = lambda element : True if re.search(r'^\d+\.\d+$', element) else False
-    is_int = lambda element : True if re.search(r'^\d+$', element) else False
-    if is_float(element):
-        new_element = float(element)
-    elif is_int(element):
-        new_element = int(element)
-    else:
-        new_element = element
-    return new_element
-    
-
+   
 def get_info(root):
     path = root / 'config.ini'
     config = configparser.ConfigParser()

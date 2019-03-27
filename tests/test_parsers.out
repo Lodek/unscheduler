@@ -1,0 +1,9 @@
+....
+----------------------------------------------------------------------
+Ran 4 tests in 0.007s
+
+OK
+[id: 0, name: COMUM, buildings: [] 
+Net Area: 10, id: 1, name: res 1, buildings: [] 
+Net Area: 10, id: 2, name: res 2, buildings: [] 
+Net Area: 10]

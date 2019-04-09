@@ -7,29 +7,49 @@ logger = logging.getLogger(__name__)
 
 class Building():
     """
-    Abstraction for a building file from Archicad.
-    A building is a sequence of stories and attributes.
+    A building is a named collection of stories.
     """
     def __init__(self, model, stories):
         self.model = model
         self.stories = stories
-        self.area_comp = 0.0
-        self.area_ncomp = 0.0
-        self.area_proj = 0.0
-        self._calc_net_area()
-        self._calc_area_proj()
+        self.super_story = None
+        acs = [story.area_comp for story in self.stories]
+        ncs = [story.area_ncomp for story in self.stories]
+        self.super_story = Story(0, model, sum(acs), sum(ncs))
+        self.area_proj = max(acs)
         logger.info(repr(self))
         logger.debug('Building from stories={}'.format(stories))
 
-    def _calc_area_proj(self):
-        """ Iterates over stories to find the Projection Area and assigns it to self.area_proj """
-        areas = [story.area_comp for story in self.stories]
-        self.area_proj = max(areas)
-    
-    def _calc_net_area(self):
-        """ Calculate the net areas for Building object and assigns those to self"""
-        self.area_comp = sum([story.area_comp for story in self.stories])
-        self.area_ncomp = sum([story.area_ncomp for story in self.stories])
+    @classmethod
+    def get_super_building(cls, model, buildings):
+        """Super building return a building from a sequence of buildings as opposed
+        to a sequence of stories. Super building does a per story sum of areas.
+        Super building's idiosyncrasy is that area_proj instead of being the max
+        becomes the sum of the projection areas for each building"""
+        tallest_building = sorted(buildings, key=len)[-1]
+        story_names = [story.name for story in tallest_building.stories]
+        total_area_proj = sum(building.area_proj for building in buildings)
+        stories = []
+        for i, name in enumerate(story_names):
+            ac = sum(building[i].area_comp for building in buildings)
+            nc = sum(building[i].area_ncomp for building in buildings)
+            stories.append(Story(i, name, ac, nc))
+        new_building = cls(model, stories)
+        new_building.area_proj = total_area_proj
+        return new_building
+            
+            
+    @property
+    def area_comp(self):
+        return self.super_story.area_comp
+
+    @property
+    def area_ncomp(self):
+        return self.super_story.area_ncomp
+
+    @property
+    def total(self):
+        return self.super_story.total
     
     def __getitem__(self, n):
         """Returns the nth Story if not present, returns an empty story"""
@@ -46,7 +66,8 @@ class Building():
     def __repr__(self):
         s = '{}: model={}; stories={}; area_comp={:.2f}; area_ncomp={:.2f};'
         return s.format(self.__class__, self.model, len(self.stories), self.area_comp, self.area_ncomp)
-        
+
+
 
 class Story():
     """
@@ -59,7 +80,7 @@ class Story():
         self.name = name
         self.area_comp = area_comp
         self.area_ncomp = area_ncomp
-        logger.info(repr(self))
+        logger.debug(repr(self))
         
     def add_area(self, area, category):
         """Adds given area to the matching category,
@@ -73,6 +94,10 @@ class Story():
         else:
             raise ValueError('Invalid category')
 
+    @property
+    def total(self):
+        return self.area_comp + self.area_ncomp
+    
     def __repr__(self):
         s = '{}: id={}; name={}; area_comp={:.2f}; area_ncomp={:.2f};'
         return s.format(self.__class__, self.id, self.name, self.area_comp, self.area_ncomp)

@@ -29,6 +29,16 @@ class TestBuilding(unittest.TestCase):
         self.assertEqual(self.building[0], self.s1)
         self.assertEqual(self.building[1], self.s2)
 
+    def test_super_building(self):
+        b1 = Building('b1', [self.s1])
+        b2 = Building('b2', [self.s2])
+        sup = Building.get_super_building('super', [b1, b2])
+        self.assertEqual(len(sup), 1)
+        self.assertEqual(sup.area_comp, 4)
+        self.assertEqual(sup.area_ncomp, 6)
+        self.assertEqual(sup.area_proj, 4)
+        
+        
 
 if __name__ == '__main__':
     unittest.main()

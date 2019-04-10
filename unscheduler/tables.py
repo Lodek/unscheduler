@@ -4,13 +4,19 @@ Each type of Table is a subclass of BaseBuilder """
 from pathlib import Path
 
 templates_path = Path(__file__).parent / '..' / 'templates'
+fmt_area = lambda s : '${:.2f}$ m$^2$'.format(s)
+fmt_perc = lambda s : '${:.2f}$\%'.format(s)
+fmt_float = lambda s : '${:.2f}$'.format(s)
 
-class LaTexFactory():
+class LatexFormatter:
     """
-    From list of lists formats a latex file
+    Base class with methods to format a table from a list of lists
+    into text which can be written into a .tex file and processed.
     """
-    @classmethod
-    def _tabularfy(cls, matrix, headers=True, title=False):
+    template = None
+    headers = True
+    title = False
+    def _tabularfy(self, matrix):
         """Generate simple latex formatting for a latex tabular environment. 
         Returns the contents of the Latex tabular environment as a list of strings.
         title flag indicates whether or not matrix the first row of the matrix
@@ -20,13 +26,13 @@ class LaTexFactory():
         """
         hline = r'\hline'
         tabular = []
-        if title:
-            tabular.append(cls._format_row(matrix.pop(0)))
-        if headers:
+        if self.title:
+            tabular.append(self._format_row(matrix.pop(0)))
+        if self.headers:
             tabular.append(hline)
-            tabular.append(cls._format_row(matrix.pop(0)))
+            tabular.append(self._format_row(matrix.pop(0)))
         tabular.append(hline)
-        tabular.extend([cls._format_row(row) for row in matrix])
+        tabular.extend([self._format_row(row) for row in matrix])
         tabular.append(hline)
         return tabular
 
@@ -38,72 +44,72 @@ class LaTexFactory():
         code = ' & '.join(row) + r' \\'
         return code
 
-    @classmethod
-    def get_latex(cls, matrix, template, args=[], headers=True, title=False):
+    def _get_latex(self, matrix, args=[]):
         """From matrix (which contains the body of the table as a list of lists,
         return string which is the corresponding matrix in a LaTeX format
         inserted into template. Optionally passes *args to format call on template"""
-        tabular = '\n'.join(cls._tabularfy(matrix, headers, title))
-        return template.format(*args + [tabular])
+        tabular = '\n'.join(self._tabularfy(matrix))
+        return self.template.format(*args + [tabular])
 
     
-fmt_area = lambda s : '${:.2f}$ m$^2$'.format(s)
-fmt_perc = lambda s : '${:.2f}$\%'.format(s)
-fmt_float = lambda s : '${:.2f}$'.format(s)
-
-class StoryTableFactory:
+class StoryFormatter(LatexFormatter):
     """
-    Factory that returns the representation of a Story as a LaTeX table
+    An initialized instance of StoryFormatter returns text
+    matching a latex file for a Story Table
     """
-    @classmethod
-    def get_latex(cls, story):
-        template_path = templates_path / 'story-template.tex'
-        template = template_path.read_text()
-        table = cls._build_table(story)
-        tex = LaTexFactory.get_latex(table, template, title=True)
-        return tex
+    template_path = templates_path / 'story-template.tex'
+    template = template_path.read_text()
+    headers = True
+    title = True
+    def format(self, story):
+        """Format a story object into a latex compatible string representing
+        a file ready for compilation"""
+        table = self._build_table(story)
+        return self._get_latex(table)
 
-    @staticmethod
-    def _build_table(story):
+    def _build_table(self, story):
         title = ['', story.name.upper(), '']
         headers = ['AREA COMP.', 'AREA NAO COMP.', 'TOTAL']
         body = [[fmt_area(story.area_comp), fmt_area(story.area_ncomp), fmt_area(story.total)]]
         return [title, headers] + body
 
 
-class BuildingTableFactory:
+class BuildingFormatter(LatexFormatter):
     """
-    Factory class that returns the representation of a building as a table in Tex
+    Transform a Building object into a table in the Latex format. Return a string
+    which when written to a file can be processed by pdflatex.
     """
-    @classmethod
-    def get_latex(cls, building):
-        template_path = templates_path / 'building-template.tex'
-        template = template_path.read_text()
-        table = cls._build_table(building)
-        tex = LaTexFactory.get_latex(table, template)
-        return tex
+    template_path = templates_path / 'building-template.tex'
+    template = template_path.read_text()
+    headers = True
+    title = False
+    def format(self, building):
+        """Format a building object into a latex compatible string representing
+        a file ready for compilation"""
+        table = self._build_table(building)
+        return self._get_latex(table)
         
-    @staticmethod
-    def _build_table(building):
-        """ Generates tabular list for Building Table """
+    def _build_table(self, building):
         headers = ['PAVIMENTO', 'AREA COMP.', 'AREA NAO COMP.']
         formatter = lambda s : [s.name.upper(), fmt_area(s.area_comp), fmt_area(s.area_ncomp)]
         body = [formatter(story) for story in building.stories + [building.super_story]]
         return [headers] + body
 
 
-class SubplotAreasFactory:
+class SubAreasFormatter(LatexFormatter):
     """
-
+    Class that operate on an instance of Lot to generate a string representing
+    the Subplot Areas table needed for the building plans.
     """
-    @classmethod
-    def get_latex(cls, lot):
-        template_path = templates_path / 'subplot-areas-template.tex'
-        template = template_path.read_text()
-        table = cls._build_table(lot)
+    title = True
+    headers = True
+    template_path = templates_path / 'subplot-areas-template.tex'
+    template = template_path.read_text()
+    def format(self, lot):
+        table = self._build_table(lot)
         table_fmt = 'l' * len(table[0])
         args = [table_fmt]
-        tex = LaTexFactory.get_latex(table, template, args=args, title=True)
+        tex = self._get_latex(table, args)
         return tex
  
     @staticmethod
@@ -125,21 +131,22 @@ class SubplotAreasFactory:
         return [title, header] + body
 
 
-class SubplotStatsFactory:
-    """ SubplotTable generates the .tex file for the Subplot statistics table. """
-    @classmethod
-    def get_latex(cls, lot):
-        template_path = templates_path / 'subplot-stats-template.tex'
-        template = template_path.read_text()
-        table = cls._build_table(lot)
-        tex = LaTexFactory.get_latex(table, template, headers=False)
-        return tex
+class SubStatsFormatter(LatexFormatter):
+    """Operate on lot to produce the Suplot stats text
+    for the Subplot stats table
+    """
+    template_path = templates_path / 'subplot-stats-template.tex'
+    template = template_path.read_text()
+    headers = False
+    title = False
+    def format(self, lot):
+        table = self._build_table(lot)
+        return self._get_latex(table)
 
-    @classmethod
-    def _build_table(cls, lot):
+    def _build_table(self, lot):
         headers = ['NOME', 'AREA PROJECAO', 'AREA SUBLOTE', 'TAXA OCUPACAO',
                    'COEF.APROVEITAMENTO', 'AREA PERMEAVEL', 'TAXA PERMEABILIDADE']
-        body = [cls._gen_row(sub) for sub in lot.subplots + [lot]]
+        body = [self._gen_row(sub) for sub in lot.subplots + [lot]]
         return body
 
     @staticmethod
@@ -153,17 +160,21 @@ class SubplotStatsFactory:
         row.append(fmt_perc(s.taxa_perm))
         return row
 
-class LotStatsFactory:
-    """ LotTable generates the .tex file for the Lot statistics table. """
-    @classmethod
-    def get_latex(cls, lot):
-        template_path = templates_path / 'lot-stats-template.tex'
-        template = template_path.read_text()
-        table = cls._build_table(lot)
-        tex = LaTexFactory.get_latex(table, template, title=True, headers=False)
-        return tex
 
-    def _build_table(lot):
+class LotStatsFormatter(LatexFormatter):
+    """
+    Operate on lot to return the text for the Lot statistics table.
+    """
+    template_path = templates_path / 'lot-stats-template.tex'
+    template = template_path.read_text()
+    headers = True
+    title = False
+    def format(self, lot):
+        """Operate on lot and return the lot-stats.tex file text"""
+        table = self._build_table(lot)
+        return self._get_latex(table)
+
+    def _build_table(self, lot):
         title = ['ESTATISTICAS', '']
         body = [['AREA DO LOTE', fmt_area(lot.area_lot)]]
         body.append(['AREA DO LOTE ATINGIDA', fmt_area(lot.area_useless)])

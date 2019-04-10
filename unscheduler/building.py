@@ -10,6 +10,7 @@ class Building():
     """
     A building is a named collection of stories.
     """
+    formatter = tables.BuildingFormatter()
     def __init__(self, model, stories):
         self.model = model
         self.stories = stories
@@ -59,7 +60,7 @@ class Building():
 
     def write_latex(self, target_dir):
         target = target_dir / '{}.tex'.format(self.model)
-        latex = tables.BuildingTableFactory.get_latex(self)
+        latex = self.formatter.format(self)
         with target.open('w') as f:
             f.write(latex)
 
@@ -90,6 +91,7 @@ class Story():
     A story is composed of a name, an id, net computable area and net non-computable area
     Each building has multiple stories
     """
+    formatter = tables.StoryFormatter()
     def __init__(self, id, name, area_comp=0.0, area_ncomp=0.0):
         self.id = id
         self.name = name
@@ -120,7 +122,7 @@ class Story():
 
     def write_latex(self, target_dir):
         target_path = target_dir / 'story-{}.tex'.format(self.id)
-        latex = tables.StoryTableFactory.get_latex(self)
+        latex = self.formatter.format(self)
     
     def __repr__(self):
         s = '{}: id={}; name={}; area_comp={:.2f}; area_ncomp={:.2f};'

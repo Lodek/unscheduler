@@ -58,6 +58,9 @@ class Lot(Land):
     on which the buildings are planned.
     Land is divided into subplots and data intrinsic to it.
     """
+    sub_stats_formatter = tables.SubStatsFormatter()
+    sub_areas_formatter = tables.SubAreasFormatter()
+    lot_stats_formatter = tables.LotStatsFormatter()
     def __init__(self, subplots, lot_info):
         self.name = 'total'
         self.area_lot = 0.0
@@ -88,24 +91,22 @@ class Lot(Land):
         """Write latex tables for Subplot Stats table, Subplot Areas,
         Lot Stats and Lot super building table."""
         self.super_building.write_latex(target_dir)
-        for story in self.super_building.stories:
+        for story in self.super_building.all_stories():
             story.write_latex(target_dir)
 
         p_sub_area = target_dir / 'subplot-areas.tex'
         p_sub_stats = target_dir / 'subplot-stats.tex'
         p_lot_stats = target_dir / 'lot-stats.tex'
 
-        funcs = [tables.SubplotAreasFactory.get_latex,
-                 tables.SubplotStatsFactory.get_latex,
-                 tables.LotStatsFactory.get_latex]
+        funcs = [self.sub_areas_formatter.format,
+                 self.sub_stats_formatter.format,
+                 self.lot_stats_formatter.format]
         ps = [p_sub_area, p_sub_stats, p_lot_stats]
 
         for p, func in zip (ps, funcs):
             latex = func(self)
             with p.open('w') as f:
                 f.write(latex)
-        
-        
 
     def __len__(self):
         """ Returns the ammount of subplots """

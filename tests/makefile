@@ -1,5 +1,5 @@
 export PYTHONPATH = ../unscheduler
-tests = test_parsers test_building
+tests = test_factory test_building test_tables
 
 all: $(tests)
 

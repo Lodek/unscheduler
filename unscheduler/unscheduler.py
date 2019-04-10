@@ -1,82 +1,57 @@
-import configparser, argparse, re, pdb
+import tables
+from factory import BuildingFactory, SubplotFactory, caster
+import configparser, argparse, re
 from pathlib import Path
-from parser import BuildingParser, SubplotParser
-from tables import StoryTable, BuildingTable, SubplotBuildingTable, SubplotTable, LotTable
 from land import Lot
-from worker import Charlie
-from parsers import caster
+import worker
 
 
 def main():
     root = Path(parse_arguments().directory).absolute()
     schedules = root / 'publisher' / 'schedules'
     out = root / 'publisher' / 'unscheduler'
-    defs = get_dict()
+    defs = get_defs(root)
 
     buildings = []
-    for model in defs['buildings'].split():
+    for model in defs['project_info']['buildings'].split():
         p = schedules / '{}.txt'.format(model)
         buildings.append(BuildingFactory.get_building(model, p.read_text()))
-    buildings.append(BuildingFactory.null_building())
+    buildings.append(BuildingFactory.get_null_building())
 
-    relations_dict = {caster(id) : buildings.split() for id, buildings in defs['relations'].items()}
-
-    suplots_path = schedules / 'subplots.txt'
+    subplot_buildings_dict = subplot_building_relations(defs, buildings)
+    subplots_path = schedules / 'subplots.txt'
     perm_path = schedules / 'area_perm.txt'
     subplots = SubplotFactory.get_subplots(subplots_path.read_text(),
                                            perm_path.read_text(),
-                                           buildings, relations_dict)
+                                           subplot_buildings_dict)
+    lot_info = proc_lot_info(defs)                                       
+    lot = Lot(subplots, lot_info)
 
-    project_info = {attr : caster(value) for attr, value in defs['project_info'].items()}
-    lot = Lot(subplots, project_info)
+    for building in buildings:
+        building.write_latex(out)
+    lot.write_latex(out)
+    worker.Charlie.do(out, out)
 
+def subplot_building_relations(defs, buildings):    
+    """Return dictionary with subplot id as key and list of buildings as value.
+    Used in subplot factory to assign the correct building to each subplot."""
+    models_relations = {caster(id) : models.split() for id, models in defs['relations'].items()}
+    buildings_dict = {building.model : building for building in buildings}
+    relations = {id : [buildings_dict[model] for model in models] for id, models in models_relations.items()}
+    return relations
     
-    
-
-        
-    
-    
-
-
-def main():
-    root = Path(parse_arguments().directory)
-    configs = get_info(root)
-    schedules = root / 'publisher' / 'schedules'
-    out = root / 'publisher' / 'unscheduler'
-
-    building_paths = [p for p in schedules.iterdir() if p.name in configs['buildings']]
-    buildings = BuildingParser(building_paths).buildings #for the love of, change parser to receive a TEXT instead of a list of paths
-
-    subplot_paths = [path for path in paths if path not in building_paths] #wtf is this?
-    lot_dict = {key : caster(value) for key, value in project_info['lot'].items()}
-    building_dict = construct_dict(project_info, buildings)
-    subplots = SubplotParser(subplot_paths, building_dict).subplots
-    lot = Lot(subplots, lot_dict)
-    lot.calc_all()
-    story_tables = [StoryTable(story, root) for story in lot.stories]
-    building_tables = [BuildingTable(building, root) for building in buildings if building.model is not 'null']
-    subplot_building_table = SubplotBuildingTable(lot, root)
-    subplot_table = SubplotTable(subplots, lot, root)
-    lot_table = LotTable(lot, root)
-    for table in story_tables:
-        table.write_latex()
-    for table in building_tables:
-        table.write_latex()
-    subplot_building_table.write_latex()
-    subplot_table.write_latex()
-    lot_table.write_latex()
-    charlie = Charlie(root, out)
-    charlie.work()
-    #fin
-
+def proc_lot_info(defs):
+    lot_info = {attr : caster(value) for attr, value in defs['lot_info'].items()}
+    lot_info['rec_cov'] = sum(map(float, str(lot_info['rec_cov']).split()))
+    lot_info['rec_ncov'] = sum(map(float, str(lot_info['rec_ncov']).split()))
+    return lot_info
     
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('directory', default='.', help='Root directory of project. Must follow the expected folder structure')
     return parser.parse_args()
 
-   
-def get_info(root):
+def get_defs(root):
     path = root / 'config.ini'
     config = configparser.ConfigParser()
     config.read(path)

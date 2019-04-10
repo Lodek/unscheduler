@@ -30,18 +30,18 @@ class Charlie():
         """Remove all .aux, .log and .tex files from work_dir and out_path"""
         logger.info('Charlie, CLEAN!')
         rm_suffixes = '.aux .log .tex'.split()
-        kill_list = [p for p in self.out_path if p.suffix in rm_suffixes]
-        kill_list_2 = [p for p in self.work_dir if p.suffix in rm_suffixes]
+        kill_list = [p for p in self.out_path.iterdir() if p.suffix in rm_suffixes]
+        kill_list_2 = [p for p in self.work_dir.iterdir() if p.suffix in rm_suffixes]
         for path in kill_list + kill_list_2:
             command = ['rm', str(path.absolute())]
-            logger.debug('Removing {}'format(path.name))
+            logger.debug('Removing {}'.format(path.name))
             run(command)
             
     def pdfy(self):
         """Run pdflatex on every .tex file in work_dir, send outputs to out_path"""
         logger.info('Charlie, PDFY!')
-        targets = [path for path in work_dir.iterdir() if path.suffix == '.tex']
+        targets = [path for path in self.work_dir.iterdir() if path.suffix == '.tex']
         for path in targets:
             command = ['pdflatex', '-output-directory', str(self.out_path.absolute()), str(path.absolute())]
-            logger.debug('Converting {}'format(path.name))
+            logger.debug('Converting {}'.format(path.name))
             run(command)

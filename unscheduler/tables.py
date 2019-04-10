@@ -1,223 +1,183 @@
 """ This file contains all of the classes responsible for generating the formatted .tex file.
 Each type of Table is a subclass of BaseBuilder """
 
-import pdb
 from pathlib import Path
 
-class BaseBuilder():
-    
-    """ Base class for Table classes."""
+templates_path = Path(__file__).parent / '..' / 'templates'
 
-    #temporary assumption of where templates will reside
-    template_root = Path(__file__).parent / '..' / 'templates'
-
-    def __init__(self):
-        """ Outlines attributes needed by the methods implemented in BaseBuilder.
-        -self.output_path: points to the output .tex file.
-        -self.template_path: points to a file containg the Latex template for that class
-        -self.tabular: is a list where each element is a line in the latex file
-        (equivalent to a latex formatted row).
-        -self.latex: contains the formatted latex text that will be written to self.output """
-        self.output_path = None
-        self.template_path = None
-        self.tabular = None
-        self.latex = None
-
-    @staticmethod
-    def tabularfy(matrix, headers=None):
-        """ Generate simple latex formatting for a latex tabular environment. 
+class LaTexFactory():
+    """
+    From list of lists formats a latex file
+    """
+    @classmethod
+    def _tabularfy(cls, matrix, headers=True, title=False):
+        """Generate simple latex formatting for a latex tabular environment. 
         Returns the contents of the Latex tabular environment as a list of strings.
-        Optionally it takes a list of strings to be used as 'headers'.
-        Headers are placed as the first row in the table and
-        separated from its body by an hline element"""
+        title flag indicates whether or not matrix the first row of the matrix
+        contais a "title".
+        headers flag indicates whether or not the second row (first if there's
+        no title) is a row of headers.
+        """
         hline = r'\hline'
-        format_row = lambda row : ' & '.join(row) + r' \\'
-        tabular = [format_row(row) for row in matrix]
-        tabular.insert(0, hline)
+        tabular = []
+        if title:
+            tabular.append(cls._format_row(matrix.pop(0)))
         if headers:
-            tabular.insert(0, format_row(headers))
-            tabular.insert(0, hline)
+            tabular.append(hline)
+            tabular.append(cls._format_row(matrix.pop(0)))
+        tabular.append(hline)
+        tabular.extend([cls._format_row(row) for row in matrix])
         tabular.append(hline)
         return tabular
 
     @staticmethod
-    def format_row(row):
+    def _format_row(row):
         """ Takes a list of strings under the assumption that each
         element in that list is a cell in a tabular row. 
         Returns a string with matching latex code for the row """
         code = ' & '.join(row) + r' \\'
         return code
 
-    def latexfy(self, *args):
-        """ Generates self.latex. Essentially opens self.template_path, inserts argumetns in template using .format()
-        and returns self.latex. """
-        with self.template_path.open() as f:
-            template = f.read()
-        latex = template.format(*args)
-        return latex
+    @classmethod
+    def get_latex(cls, matrix, template, args=[], headers=True, title=False):
+        """From matrix (which contains the body of the table as a list of lists,
+        return string which is the corresponding matrix in a LaTeX format
+        inserted into template. Optionally passes *args to format call on template"""
+        tabular = '\n'.join(cls._tabularfy(matrix, headers, title))
+        return template.format(*args + [tabular])
 
-    def write_latex(self):
-        """ Opens self.output_path as 'w' and writes self.latex. """
-        with self.output_path.open('w') as f:
-            f.write(self.latex)
-
-
-class BuildingTable(BaseBuilder):
-
-    """ BuildingTable generates the .tex file for any Building class. """
     
-    def __init__(self, building, root_path):
-        self.template_path = self.template_root / 'building-table-template.tex'
-        self.output_path = root_path / '{}.tex'.format(building.model)
-        self.building = building
-        self.tabular = self.build_tabular(building)
-        self.tabular_str = '\n'.join(self.tabular)
-        self.latex = self.latexfy(self.tabular_str)
+fmt_area = lambda s : '${:.2f}$ m$^2$'.format(s)
+fmt_perc = lambda s : '${:.2f}$\%'.format(s)
+fmt_float = lambda s : '${:.2f}$'.format(s)
 
-    def build_tabular(self, building):
-        """ Generates tabular list for Building Table """
-        formatter = lambda name, area_comp, area_ncomp : [name, '${:.2f}$ m$^2$'.format(area_comp), '${:.2f}$ m$^2$'.format(area_ncomp)]
-        matrix = [formatter(story.name, story.area_comp, story.area_ncomp) for story in building.stories]
-        matrix.append(formatter('Total', building.area_comp, building.area_ncomp))
-        headers = ['PAVIMENTO', 'AREA COMP.', 'AREA NAO COMP.']
-        tabular = self.tabularfy(matrix, headers)
-        return tabular
+class StoryTableFactory:
+    """
+    Factory that returns the representation of a Story as a LaTeX table
+    """
+    @classmethod
+    def get_latex(cls, story):
+        template_path = templates_path / 'story-template.tex'
+        template = template_path.read_text()
+        table = cls._build_table(story)
+        tex = LaTexFactory.get_latex(table, template, title=True)
+        return tex
+
+    @staticmethod
+    def _build_table(story):
+        title = ['', story.name.upper(), '']
+        headers = ['AREA COMP.', 'AREA NAO COMP.', 'TOTAL']
+        body = [[fmt_area(story.area_comp), fmt_area(story.area_ncomp), fmt_area(story.total)]]
+        return [title, headers] + body
 
 
-class SubplotBuildingTable(BaseBuilder):
-    def __init__(self, lot, root_path):
-        self.template_path = self.template_root / 'subplot-building-table-template.tex'
-        self.output_path = root_path / 'subplot-building-table.tex'
-        self.lot = lot
-        self.tabular_specs = ''
-        self.tabular = self.build_tabular()
-        self.tabular_str = '\n'.join(self.tabular)
-        self.latex = self.latexfy(self.tabular_specs, self.tabular_str)
-
-    def build_tabular(self):
-        story_names = [story.name.upper() for story in self.lot.stories]
-        num_stories = len(self.lot.stories)
-        multirow = lambda cell : '\multicolumn{{2}}{{c}}{{{}}}'.format(cell)
-        stringfy = lambda s : '${:.2f}$ m$^2$'.format(s)
-        latex_stories = [multirow(name) for name in story_names]
-        latex_stories.append(multirow('TOTAL'))
-        latex_stories.insert(0, '')
-        latex_stories = self.format_row(latex_stories)
-        subplots = self.lot.subplots
-        headers = ['SUBLOTE']
-        for i in range(num_stories+1):
-            headers.extend(['COMP', 'N. COMP'])
-        matrix = []
-        for subplot in subplots:
-            row = [subplot.name]
-            for i in range(num_stories):
-                row.append(stringfy(subplot.building[i].area_comp))
-                row.append(stringfy(subplot.building[i].area_ncomp))
-            row.append(stringfy(subplot.area_comp))
-            row.append(stringfy(subplot.area_ncomp))
-            matrix.append(row)
-        row = ['TOTAL']
-        for story in self.lot.stories:
-            row.append(stringfy(story.area_comp))
-            row.append(stringfy(story.area_ncomp))
-        row.append(stringfy(self.lot.area_comp))
-        row.append(stringfy(self.lot.area_ncomp))
-        matrix.append(row)
-        tabular = self.tabularfy(matrix, headers)
-        tabular.insert(0, latex_stories)
-        self.tabular_specs = 'l' + 'c'*2*(num_stories+1)
-        return tabular
+class BuildingTableFactory:
+    """
+    Factory class that returns the representation of a building as a table in Tex
+    """
+    @classmethod
+    def get_latex(cls, building):
+        template_path = templates_path / 'building-template.tex'
+        template = template_path.read_text()
+        table = cls._build_table(building)
+        tex = LaTexFactory.get_latex(table, template)
+        return tex
         
-
-class SubplotTable(BaseBuilder):
-
-    """ SubplotTable generates the .tex file for the Subplot statistics table. """
-    
-    def __init__(self, subplots, lot, root_path):
-        self.template_path = self.template_root / 'subplot-table-template.tex'
-        self.output_path = root_path / 'subplot-table.tex'
-        self.subplots = subplots
-        self.lot = lot
-        self.tabular = self.build_tabular()
-        self.tabular_str = '\n'.join(self.tabular)
-        self.latex = self.latexfy(self.tabular_str)
-
-    def build_tabular(self):
+    @staticmethod
+    def _build_table(building):
         """ Generates tabular list for Building Table """
-        #for context only, headers are now included in template
+        headers = ['PAVIMENTO', 'AREA COMP.', 'AREA NAO COMP.']
+        formatter = lambda s : [s.name.upper(), fmt_area(s.area_comp), fmt_area(s.area_ncomp)]
+        body = [formatter(story) for story in building.stories + [building.super_story]]
+        return [headers] + body
+
+
+class SubplotAreasFactory:
+    """
+
+    """
+    @classmethod
+    def get_latex(cls, lot):
+        template_path = templates_path / 'subplot-areas-template.tex'
+        template = template_path.read_text()
+        table = cls._build_table(lot)
+        table_fmt = 'l' * len(table[0])
+        args = [table_fmt]
+        tex = LaTexFactory.get_latex(table, template, args=args, title=True)
+        return tex
+ 
+    @staticmethod
+    def _build_table(lot):
+        title = ['']
+        for story in lot.super_building.all_stories():
+            title.extend([story.name.upper(), ''])
+        header = ['SUBLOTE']
+        for _ in lot.super_building.all_stories():
+            header.extend(['COMP', 'N COMP'])
+        body = []
+        for s in lot.subplots + [lot]:
+            row = []
+            row.append(s.name.upper())
+            for story in s.super_building.all_stories():
+                row.append(fmt_area(story.area_comp))
+                row.append(fmt_area(story.area_ncomp))
+            body.append(row)
+        return [title, header] + body
+
+
+class SubplotStatsFactory:
+    """ SubplotTable generates the .tex file for the Subplot statistics table. """
+    @classmethod
+    def get_latex(cls, lot):
+        template_path = templates_path / 'subplot-stats-template.tex'
+        template = template_path.read_text()
+        table = cls._build_table(lot)
+        tex = LaTexFactory.get_latex(table, template, headers=False)
+        return tex
+
+    @classmethod
+    def _build_table(cls, lot):
         headers = ['NOME', 'AREA PROJECAO', 'AREA SUBLOTE', 'TAXA OCUPACAO',
                    'COEF.APROVEITAMENTO', 'AREA PERMEAVEL', 'TAXA PERMEABILIDADE']
-        matrix = [self._gen_row(subplot) for subplot in self.subplots]
-        matrix.append(self._gen_total())
-        tabular = self.tabularfy(matrix)
-        return tabular
+        body = [cls._gen_row(sub) for sub in lot.subplots + [lot]]
+        return body
 
-    def _gen_total(self):
-        total = ['TOTAL']
-        total.append('${:.2f}$ m$^2$'.format(self.lot.area_proj))
-        total.append('${:.2f}$ m$^2$'.format(self.lot.area_net))
-        total.append('${:.2f}$\%'.format(self.lot.taxa_ocp))
-        total.append('${:.2f}$'.format(self.lot.coef_aprov))
-        total.append('${:.2f}$ m$^2$'.format(self.lot.area_perm))
-        total.append('${:.2f}$\%'.format(self.lot.taxa_perm))
-        return total
-    
-    def _gen_row(self, subplot):
-        row = [subplot.name]
-        row.append('${:.2f}$ m$^2$'.format(subplot.area_proj))
-        row.append('${:.2f}$ m$^2$'.format(subplot.area_net))
-        row.append('${:.2f}$\%'.format(subplot.taxa_ocp))
-        row.append('${:.2f}$'.format(subplot.coef_aprov))
-        row.append('${:.2f}$ m$^2$'.format(subplot.area_perm))
-        row.append('${:.2f}$\%'.format(subplot.taxa_perm))
+    @staticmethod
+    def _gen_row(s):
+        row = [s.name.upper()]
+        row.append(fmt_area(s.area_proj))
+        row.append(fmt_area(s.area_net))
+        row.append(fmt_perc(s.taxa_ocp))
+        row.append(fmt_float(s.coef_aprov))
+        row.append(fmt_area(s.area_perm))
+        row.append(fmt_perc(s.taxa_perm))
         return row
 
-
-class LotTable(BaseBuilder):
-
+class LotStatsFactory:
     """ LotTable generates the .tex file for the Lot statistics table. """
-    
-    def __init__(self, lot, root_path):
-        self.template_path = self.template_root / 'lot-table-template.tex'
-        self.output_path = root_path / 'lot-table.tex'
-        self.lot = lot
-        self.tabular = self.build_tabular()
-        self.tabular_str = '\n'.join(self.tabular)
-        self.latex = self.latexfy(self.tabular_str)
-        
-    def build_tabular(self):
-        headers = ['ESTATISTICAS', '']
-        matrix = [['AREA DO LOTE', '${:.2f}$ m$^2$'.format(self.lot.area_lot)]]
-        matrix.append(['AREA DO LOTE ATINGIDA', '${:.2f}$ m$^2$'.format(self.lot.area_useless)])
-        matrix.append(['AREA DO LOTE REMANESCENTE', '${:.2f}$ m$^2$'.format(self.lot.area_net)])
-        matrix.append(['AREA TOTAL COMPUTAVEL', '${:.2f}$ m$^2$'.format(self.lot.area_comp)])
-        matrix.append(['AREA TOTAL NAO COMPUTAVEL', '${:.2f}$ m$^2$'.format(self.lot.area_ncomp)])
-        matrix.append(['AREA PROJECAO', '${:.2f}$ m$^2$'.format(self.lot.area_proj)])
-        matrix.append(['TAXA DE OCUPACAO', '${:.2f}$\%'.format(self.lot.taxa_ocp)])
-        matrix.append(['COEFICIENTE DE APROVEITAMENTO', '${:.2f}$'.format(self.lot.coef_aprov)])
-        matrix.append(['AREA PERMEAVEL', '${:.2f}$ m$^2$'.format(self.lot.area_perm)])
-        matrix.append(['COEFICIENTE PERMEABILIDADE', '${:.2f}$\%'.format(self.lot.taxa_perm)])
-        matrix.append(['NUMERO DE UNIDADES', '{} UN'.format(self.lot.units)])
-        matrix.append(['RECREACAO DESCOBERTA', '${:.2f}$ m$^2$'.format(self.lot.rec_ncov)])
-        matrix.append(['RECREACAO COBERTA', '${:.2f}$ m$^2$'.format(self.lot.rec_cov)])
-        matrix.append(['RECREACAO TOTAL', '${:.2f}$ m$^2$'.format(self.lot.rec_net)])
-        tabular = self.tabularfy(matrix, headers)
-        return tabular
+    @classmethod
+    def get_latex(cls, lot):
+        template_path = templates_path / 'lot-stats-template.tex'
+        template = template_path.read_text()
+        table = cls._build_table(lot)
+        tex = LaTexFactory.get_latex(table, template, title=True, headers=False)
+        return tex
 
-class StoryTable(BaseBuilder):
+    def _build_table(lot):
+        title = ['ESTATISTICAS', '']
+        body = [['AREA DO LOTE', fmt_area(lot.area_lot)]]
+        body.append(['AREA DO LOTE ATINGIDA', fmt_area(lot.area_useless)])
+        body.append(['AREA DO LOTE REMANESCENTE', fmt_area(lot.area_net)])
+        body.append(['AREA TOTAL COMPUTAVEL', fmt_area(lot.area_comp)])
+        body.append(['AREA TOTAL NAO COMPUTAVEL', fmt_area(lot.area_ncomp)])
+        body.append(['AREA PROJECAO', fmt_area(lot.area_proj)])
+        body.append(['TAXA DE OCUPACAO', fmt_perc(lot.taxa_ocp)])
+        body.append(['COEFICIENTE DE APROVEITAMENTO', fmt_float(lot.coef_aprov)])
+        body.append(['AREA PERMEAVEL', fmt_area(lot.area_perm)])
+        body.append(['COEFICIENTE PERMEABILIDADE', fmt_perc(lot.taxa_perm)])
+        body.append(['NUMERO DE UNIDADES', '{} UN'.format(lot.units)])
+        body.append(['RECREACAO DESCOBERTA', fmt_area(lot.rec_ncov)])
+        body.append(['RECREACAO COBERTA', fmt_area(lot.rec_cov)])
+        body.append(['RECREACAO TOTAL', fmt_area(lot.rec_net)])
+        return [title] + body
 
-    """ Table for total area for a single story in Lot """
-
-    def __init__(self, story, root_path):
-        self.template_path = self.template_root / 'story-table-template.tex'
-        self.output_path = root_path / 'story-{}-table.tex'.format(story.name)
-        self.story = story
-        self.tabular = self.build_tabular()
-        self.tabular_str = '\n'.join(self.tabular)
-        self.latex = self.latexfy(self.tabular_str)
-
-    def build_tabular(self):
-        matrix = [['AREA COMP.', '${:.2f}$ m$^2$'.format(self.story.area_comp)]]
-        matrix.append(['AREA NAO COMP.', '${:.2f}$ m$^2$'.format(self.story.area_ncomp)])
-        tabular = self.tabularfy(matrix)
-        return tabular

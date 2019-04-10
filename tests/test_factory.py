@@ -1,6 +1,6 @@
 from pathlib import Path
 import unittest
-from parsers import Parser, BuildingFactory, SubplotFactory
+from factory import Parser, BuildingFactory, SubplotFactory
 
 
 class TestParser(unittest.TestCase):
@@ -43,9 +43,7 @@ class TestSubplotFacotry(unittest.TestCase):
         p_subplots = Path('samples/test-subplots.txt')
         p_perm = Path('samples/test-perm.txt')
         subplots = SubplotFactory.get_subplots(p_subplots.read_text(),
-                                               p_perm.read_text(),
-                                               [],
-                                               {})
+                                               p_perm.read_text(), {})
         self.assertEqual(len(subplots), 3)
         print(subplots)
 

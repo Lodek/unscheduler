@@ -1,4 +1,0 @@
-story	category	area 
-terreo	C	69.00 
-sup	C	21.00 
-sup	NC	2.00 

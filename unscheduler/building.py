@@ -2,6 +2,7 @@
 The module contains memes.
 """
 import logging
+import tables
 
 logger = logging.getLogger(__name__)
 
@@ -15,10 +16,14 @@ class Building():
         self.super_story = None
         acs = [story.area_comp for story in self.stories]
         ncs = [story.area_ncomp for story in self.stories]
-        self.super_story = Story(0, model, sum(acs), sum(ncs))
+        self.super_story = Story(-1, 'TOTAL', sum(acs), sum(ncs))
         self.area_proj = max(acs)
         logger.info(repr(self))
         logger.debug('Building from stories={}'.format(stories))
+
+    @classmethod
+    def get_null_building(cls):
+        return cls('null', [Story.null_story()])
 
     @classmethod
     def get_super_building(cls, model, buildings):
@@ -26,6 +31,8 @@ class Building():
         to a sequence of stories. Super building does a per story sum of areas.
         Super building's idiosyncrasy is that area_proj instead of being the max
         becomes the sum of the projection areas for each building"""
+        if not buildings:
+            return cls.get_null_building()
         tallest_building = sorted(buildings, key=len)[-1]
         story_names = [story.name for story in tallest_building.stories]
         total_area_proj = sum(building.area_proj for building in buildings)
@@ -38,7 +45,6 @@ class Building():
         new_building.area_proj = total_area_proj
         return new_building
             
-            
     @property
     def area_comp(self):
         return self.super_story.area_comp
@@ -50,13 +56,22 @@ class Building():
     @property
     def total(self):
         return self.super_story.total
+
+    def write_latex(self, target_dir):
+        target = target_dir / '{}.tex'.format(self.model)
+        latex = tables.BuildingTableFactory.get_latex(self)
+        with target.open('w') as f:
+            f.write(latex)
+
+    def all_stories(self):
+        return self.stories + [self.super_story]
     
     def __getitem__(self, n):
         """Returns the nth Story if not present, returns an empty story"""
         try:
             value = self.stories[n]
         except IndexError:
-            value = Story(key, 'out-of-range')
+            value = Story(n, 'out-of-range')
         return value
 
     def __len__(self):
@@ -82,6 +97,11 @@ class Story():
         self.area_ncomp = area_ncomp
         logger.debug(repr(self))
         
+
+    @classmethod
+    def null_story(cls):
+        return Story(0, 'null')
+    
     def add_area(self, area, category):
         """Adds given area to the matching category,
         area: float
@@ -97,6 +117,10 @@ class Story():
     @property
     def total(self):
         return self.area_comp + self.area_ncomp
+
+    def write_latex(self, target_dir):
+        target_path = target_dir / 'story-{}.tex'.format(self.id)
+        latex = tables.StoryTableFactory.get_latex(self)
     
     def __repr__(self):
         s = '{}: id={}; name={}; area_comp={:.2f}; area_ncomp={:.2f};'

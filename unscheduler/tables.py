@@ -192,3 +192,15 @@ class LotStatsFormatter(LatexFormatter):
         body.append(['RECREACAO TOTAL', fmt_area(lot.rec_net)])
         return [title] + body
 
+class TOSFormatter(LatexFormatter):
+    """TOS calculation latex file"""
+    template_path = templates_path / 'tos-template.tex'
+    template = template_path.read_text()
+    title = False
+    headers = False
+    def format(self, lot):
+        """Operate on lot and return the tos-stats.tex file text"""
+        args = [fmt_float(lot.cm), fmt_perc(lot.tos)]
+        return self._get_latex([], args=args)
+
+    

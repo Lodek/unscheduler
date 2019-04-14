@@ -44,6 +44,7 @@ def proc_lot_info(defs):
     lot_info = {attr : caster(value) for attr, value in defs['lot_info'].items()}
     lot_info['rec_cov'] = sum(map(float, str(lot_info['rec_cov']).split()))
     lot_info['rec_ncov'] = sum(map(float, str(lot_info['rec_ncov']).split()))
+    lot_info['rec_subplots'] = [int(n) for n in str(lot_info['rec_subplots']).split()]
     return lot_info
     
 def parse_arguments():

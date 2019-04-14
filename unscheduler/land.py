@@ -61,6 +61,7 @@ class Lot(Land):
     sub_stats_formatter = tables.SubStatsFormatter()
     sub_areas_formatter = tables.SubAreasFormatter()
     lot_stats_formatter = tables.LotStatsFormatter()
+    tos_formatter = tables.TOSFormatter()
     def __init__(self, subplots, lot_info):
         self.name = 'total'
         self.area_lot = 0.0
@@ -71,7 +72,7 @@ class Lot(Land):
         self.rec_net = 0.0
         self.subplots = subplots
         self.super_building = Building.get_super_building('lot-super-building', [subplot.super_building for subplot in self.subplots])
-        attrs = 'area_lot area_useless rec_cov rec_ncov units'.split()
+        attrs = 'area_lot area_useless rec_cov rec_ncov units rec_subplots ca'.split()
         for attr in attrs:
             setattr(self, attr, lot_info[attr])
         self.calc_all()
@@ -85,7 +86,16 @@ class Lot(Land):
         self.area_ncomp = sum_attr('area_ncomp')
         self.area_proj = sum_attr('area_proj')
         self.rec_net = self.rec_ncov + self.rec_cov
+        self.cm = self._calc_cm()
+        self.tos = self.ca * self.cm
         super().calc_coef()
+
+    def _calc_cm(self):
+        """Return CM for the lot"""
+        area_recs = sum([self.subplots[i].area_net for i in self.rec_subplots])
+        area_comum = self.subplots[0].area_net
+        cm = self.area_net ** 2 / (self.area_net - area_comum - area_recs)
+        return cm
 
     def write_latex(self, target_dir):
         """Write latex tables for Subplot Stats table, Subplot Areas,
@@ -97,11 +107,13 @@ class Lot(Land):
         p_sub_area = target_dir / 'subplot-areas.tex'
         p_sub_stats = target_dir / 'subplot-stats.tex'
         p_lot_stats = target_dir / 'lot-stats.tex'
+        p_tos = target_dir / 'tos.tex'
 
         funcs = [self.sub_areas_formatter.format,
                  self.sub_stats_formatter.format,
-                 self.lot_stats_formatter.format]
-        ps = [p_sub_area, p_sub_stats, p_lot_stats]
+                 self.lot_stats_formatter.format,
+                 self.tos_formatter.format]
+        ps = [p_sub_area, p_sub_stats, p_lot_stats, p_tos]
 
         for p, func in zip (ps, funcs):
             latex = func(self)

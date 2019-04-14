@@ -204,3 +204,17 @@ class TOSFormatter(LatexFormatter):
         return self._get_latex([], args=args)
 
     
+class SheetChartFormatter(LatexFormatter):
+    """Formatter that generate the tex for the information chart present
+    in every building plan sheet."""
+    template_path = templates_path / 'sheet-chart-template.tex'
+    template = template_path.read_text()
+    title = False
+    headers = False
+    def format(self, project_info):
+        "Return the tex text for the information chart"
+        init_month, init_year = project_info['inicio'].split('/')
+        args = [init_month, init_year, project_info['title'], project_info['prop']]
+        return self._get_latex([], args=args)
+
+   

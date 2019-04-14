@@ -30,7 +30,14 @@ def main():
     for building in buildings:
         building.write_latex(out)
     lot.write_latex(out)
+    write_sheet_chart(out, defs['project_info'])
     worker.Charlie.do(out, out)
+
+def write_sheet_chart(out_path, project_info):
+    fmt = tables.SheetChartFormatter()
+    target = out_path / 'sheet_chart.tex'
+    with target.open('w') as f:
+        f.write(fmt.format(project_info))
 
 def subplot_building_relations(defs, buildings):    
     """Return dictionary with subplot id as key and list of buildings as value.

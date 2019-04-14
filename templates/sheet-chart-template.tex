@@ -1,0 +1,27 @@
+%argument order:
+%project init month
+%project init year (2 digit)
+%title
+%prop
+\documentclass[8pt]{{extarticle}}
+\usepackage{{datetime}}
+\usepackage{{graphicx}}
+\newdateformat{{monthyear}}{{\THEMONTH/\THEYEAR}}
+\monthyear
+\newdate{{inicio}}{{10}}{{{}}}{{20{}}}
+\begin{{document}}
+  \begin{{tabular}}{{|ccccc|}}
+    \hline
+    \multicolumn{{5}}{{l}}{{\textbf{{PMC}}}} \\[4cm] \hline
+    \multicolumn{{5}}{{p{{\textwidth}}}}{{\tiny O AUTOR DO PROJETO E O RESPONSÁVEL TÉCNICO SÃO RESPONSÁVEIS CIVIL E ADMINISTRATIVAMENTE PELO ATENDIMENTO DAS ESPECIFICAÇÕES CONSTANTES NOS ANEXOS DA PORTARIA 80/2013, DA LEGISLAÇÃO MUNICIPAL E NORMALS BRASILEIRAS VIGENTES, SUJEITANDO-SE ÀS SANÇÕES DECORRENTES DE VENTUAIS PREJUÍZOS A TERCEIROS}}\\ \hline
+    \multicolumn{{5}}{{l}}{{\textbf{{\tiny TÍTULO}}}} \\
+    \multicolumn{{5}}{{p{{\textwidth}}}}{{\small {}}} \\
+    \hline
+    \multicolumn{{5}}{{p{{\textwidth}}}}{{\tiny PROPRIETARIO\newline \normalsize {}}} \\ \hline
+    \multicolumn{{5}}{{p{{\textwidth}}}}{{{{\tiny AUTOR/RESPONSAVEL TECNICO \hfill  EMPRESA CONSTRUTORA}}\newline ISRAEL GOMES \hfill CONSTRUCOES CIVIS \newline ENG. CIVIL CREA 85.928 D/PR \hfill MODELO LTDA}} \\ \hline
+    \multicolumn{{5}}{{p{{\textwidth}}}}{{\hfill \tiny PRANCHA }} \\[3cm] \hline
+    \multicolumn{{5}}{{l}}{{\tiny UNIDADE \hfill ESCALA \hfill INICIO \hfill ATUALIZACAO \hfill ARQUIVO}} \\[0.5cm]
+    \multicolumn{{5}}{{l}}{{\tiny \_ \hfill \_ \hfill  \displaydate{{inicio}} \hfill \today \hfill \_}} \\[0.5cm]
+    \hline
+  \end{{tabular}}
+\end{{document}}

@@ -132,12 +132,11 @@ class SubplotFactory:
         repeated_names = [seq for seq in name_dict.values() if len(seq) > 1]
         unique_names = [seq[0] for seq in name_dict.values() if len(seq) == 1]
 
+        table_new = list(unique_names)
         for sequence in repeated_names:
-            table_new = []
             for i, record in enumerate(sequence):
                 cls = type(record)
                 name = '{} {}'.format(record.name, i+1)
                 table_new.append(cls(record.id, name, record.area))
-        table_new.extend(unique_names)
         logger.debug('Result: {}'.format(table_new))
         return table_new

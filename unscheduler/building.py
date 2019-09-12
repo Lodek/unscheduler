@@ -121,9 +121,11 @@ class Story():
         return self.area_comp + self.area_ncomp
 
     def write_latex(self, target_dir):
-        target_path = target_dir / 'story-{}.tex'.format(self.id)
+        target = target_dir / 'story-{}.tex'.format(self.id)
         latex = self.formatter.format(self)
-    
+        with target.open('w') as f:
+            f.write(latex)
+
     def __repr__(self):
         s = '{}: id={}; name={}; area_comp={:.2f}; area_ncomp={:.2f};'
         return s.format(self.__class__, self.id, self.name, self.area_comp, self.area_ncomp)

@@ -27,8 +27,12 @@ def main():
     lot_info = proc_lot_info(defs)                                       
     lot = Lot(subplots, lot_info)
 
+    for story in lot.super_building:
+        story.write_latex(out)
+        
     for building in buildings:
         building.write_latex(out)
+    
     lot.write_latex(out)
     write_sheet_chart(out, defs['project_info'])
     worker.Charlie.do(out, out)

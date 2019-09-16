@@ -12,8 +12,10 @@ def main():
     out = root / 'publisher' / 'unscheduler'
     defs = get_defs(root)
 
+    pre_process(schedules)
+
     buildings = []
-    for model in defs['project_info']['buildings'].split():
+    for model in defs['project_info']['arquivos'].split():
         p = schedules / '{}.txt'.format(model)
         buildings.append(BuildingFactory.get_building(model, p.read_text()))
     buildings.append(BuildingFactory.get_null_building())
@@ -25,6 +27,7 @@ def main():
                                            perm_path.read_text(),
                                            subplot_buildings_dict)
     lot_info = proc_lot_info(defs)                                       
+
     lot = Lot(subplots, lot_info)
 
     for building in buildings:
@@ -50,9 +53,13 @@ def subplot_building_relations(defs, buildings):
     
 def proc_lot_info(defs):
     lot_info = {attr : caster(value) for attr, value in defs['lot_info'].items()}
-    lot_info['rec_cov'] = sum(map(float, str(lot_info['rec_cov']).split()))
-    lot_info['rec_ncov'] = sum(map(float, str(lot_info['rec_ncov']).split()))
-    lot_info['rec_subplots'] = [int(n) for n in str(lot_info['rec_subplots']).split()]
+    try:
+        lot_info['sublotes_atingidos'] = [int(n) for n in str(lot_info['sublotes_atingidos']).split()]
+    except KeyError:
+        lot_info['sublotes_atingidos'] = []
+    lot_info['rec_cob'] = sum(map(float, str(lot_info['rec_cob']).split()))
+    lot_info['rec_desc'] = sum(map(float, str(lot_info['rec_desc']).split()))
+    lot_info['sublotes_rec'] = [int(n) for n in str(lot_info['sublotes_rec']).split()]
     return lot_info
     
 def parse_arguments():
@@ -65,6 +72,21 @@ def get_defs(root):
     config = configparser.ConfigParser()
     config.read(path)
     return config
+
+def pre_processor(path):
+    """Function to remove edge case of non breaking space"""
+    seq = path.read_bytes()
+    seq = bytes([b for b in seq if b != 0xa0])
+    text = seq.decode(encoding='utf8')
+    with path.open('w') as f:
+        f.write(text)
+
+def pre_process(d):
+    """Iterate over directory, opens every file and call pre_processor in it"""
+    for p in d.iterdir():
+        if '.txt' in p.name:
+            pre_processor(p)
+    
 
 if __name__ == '__main__':
     main()

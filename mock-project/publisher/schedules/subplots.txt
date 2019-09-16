@@ -1,4 +1,0 @@
-id	name	area
-0	COMUM	10	
-1	res	10	
-2	res	10	

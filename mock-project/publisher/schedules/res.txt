@@ -1,4 +1,0 @@
-Home Story	Zone Category Code	Measured Area	
-TERREO PAV	C	5	
-SEGUNDO PAV	C	5	
-SEGUNDO PAV	NC	5	

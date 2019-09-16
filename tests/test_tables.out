@@ -5,11 +5,11 @@ ERROR: test_lot_stats_factory (__main__.TestTable)
 Traceback (most recent call last):
   File "test_tables.py", line 62, in test_lot_stats_factory
     lot = Lot(subplots, self.lot_info)
-  File "/home/lodek/projects/unscheduler/unscheduler/land.py", line 78, in __init__
+  File "/fakehome/lodek/projects/unscheduler/unscheduler/land.py", line 78, in __init__
     self.calc_all()
-  File "/home/lodek/projects/unscheduler/unscheduler/land.py", line 89, in calc_all
+  File "/fakehome/lodek/projects/unscheduler/unscheduler/land.py", line 89, in calc_all
     self.cm = self._calc_cm()
-  File "/home/lodek/projects/unscheduler/unscheduler/land.py", line 97, in _calc_cm
+  File "/fakehome/lodek/projects/unscheduler/unscheduler/land.py", line 97, in _calc_cm
     cm = self.area_net ** 2 / (self.area_net - area_comum - area_recs)
 ZeroDivisionError: division by zero
 
@@ -19,11 +19,11 @@ ERROR: test_subplot_stats_factory (__main__.TestTable)
 Traceback (most recent call last):
   File "test_tables.py", line 52, in test_subplot_stats_factory
     lot = Lot(subplots, self.lot_info)
-  File "/home/lodek/projects/unscheduler/unscheduler/land.py", line 78, in __init__
+  File "/fakehome/lodek/projects/unscheduler/unscheduler/land.py", line 78, in __init__
     self.calc_all()
-  File "/home/lodek/projects/unscheduler/unscheduler/land.py", line 89, in calc_all
+  File "/fakehome/lodek/projects/unscheduler/unscheduler/land.py", line 89, in calc_all
     self.cm = self._calc_cm()
-  File "/home/lodek/projects/unscheduler/unscheduler/land.py", line 97, in _calc_cm
+  File "/fakehome/lodek/projects/unscheduler/unscheduler/land.py", line 97, in _calc_cm
     cm = self.area_net ** 2 / (self.area_net - area_comum - area_recs)
 ZeroDivisionError: division by zero
 
@@ -33,11 +33,11 @@ ERROR: test_suplot_areas_factory (__main__.TestTable)
 Traceback (most recent call last):
   File "test_tables.py", line 42, in test_suplot_areas_factory
     lot = Lot(subplots, self.lot_info)
-  File "/home/lodek/projects/unscheduler/unscheduler/land.py", line 78, in __init__
+  File "/fakehome/lodek/projects/unscheduler/unscheduler/land.py", line 78, in __init__
     self.calc_all()
-  File "/home/lodek/projects/unscheduler/unscheduler/land.py", line 89, in calc_all
+  File "/fakehome/lodek/projects/unscheduler/unscheduler/land.py", line 89, in calc_all
     self.cm = self._calc_cm()
-  File "/home/lodek/projects/unscheduler/unscheduler/land.py", line 97, in _calc_cm
+  File "/fakehome/lodek/projects/unscheduler/unscheduler/land.py", line 97, in _calc_cm
     cm = self.area_net ** 2 / (self.area_net - area_comum - area_recs)
 ZeroDivisionError: division by zero
 
@@ -47,15 +47,15 @@ ERROR: test_tos_factory (__main__.TestTable)
 Traceback (most recent call last):
   File "test_tables.py", line 72, in test_tos_factory
     lot = Lot(subplots, self.lot_info)
-  File "/home/lodek/projects/unscheduler/unscheduler/land.py", line 78, in __init__
+  File "/fakehome/lodek/projects/unscheduler/unscheduler/land.py", line 78, in __init__
     self.calc_all()
-  File "/home/lodek/projects/unscheduler/unscheduler/land.py", line 89, in calc_all
+  File "/fakehome/lodek/projects/unscheduler/unscheduler/land.py", line 89, in calc_all
     self.cm = self._calc_cm()
-  File "/home/lodek/projects/unscheduler/unscheduler/land.py", line 97, in _calc_cm
+  File "/fakehome/lodek/projects/unscheduler/unscheduler/land.py", line 97, in _calc_cm
     cm = self.area_net ** 2 / (self.area_net - area_comum - area_recs)
 ZeroDivisionError: division by zero
 
 ----------------------------------------------------------------------
-Ran 7 tests in 0.010s
+Ran 7 tests in 0.009s
 
 FAILED (errors=4)

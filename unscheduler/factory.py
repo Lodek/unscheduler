@@ -37,7 +37,7 @@ class Parser:
         self.header = header
         self.matrix = []
         self.records = []
-    
+
     @classmethod
     def parse(cls, txt, fields, title=False, header=True):
         p = cls(txt, fields, title, header)

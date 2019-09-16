@@ -176,9 +176,11 @@ class LotStatsFormatter(LatexFormatter):
 
     def _build_table(self, lot):
         title = ['ESTATISTICAS', '']
-        body = [['AREA DO LOTE', fmt_area(lot.area_lot)]]
-        body.append(['AREA DO LOTE ATINGIDA', fmt_area(lot.area_useless)])
-        body.append(['AREA DO LOTE REMANESCENTE', fmt_area(lot.area_net)])
+        body = []
+        body.append(['AREA DO LOTE - RI', fmt_area(lot.area_ri)])
+        body.append(['AREA DO LOTE REAL', fmt_area(lot.net_area)])
+        body.append(['AREA DO LOTE ATINGIDA', fmt_area(lot.useless_area)])
+        body.append(['AREA DO LOTE REMANESCENTE', fmt_area(lot.area)])
         body.append(['AREA TOTAL COMPUTAVEL', fmt_area(lot.area_comp)])
         body.append(['AREA TOTAL NAO COMPUTAVEL', fmt_area(lot.area_ncomp)])
         body.append(['AREA PROJECAO', fmt_area(lot.area_proj)])
@@ -214,7 +216,7 @@ class SheetChartFormatter(LatexFormatter):
     def format(self, project_info):
         "Return the tex text for the information chart"
         init_month, init_year = project_info['inicio'].split('/')
-        args = [init_month, init_year, project_info['title'], project_info['prop']]
+        args = [init_month, init_year, project_info['titulo'], project_info['prop']]
         return self._get_latex([], args=args)
 
    

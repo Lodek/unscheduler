@@ -64,37 +64,42 @@ class Lot(Land):
     tos_formatter = tables.TOSFormatter()
     def __init__(self, subplots, lot_info):
         self.name = 'total'
-        self.area_lot = 0.0
-        self.area_useless = 0.0
-        self.units = 0
-        self.rec_ncov = 0.0
-        self.rec_cov = 0.0
-        self.rec_net = 0.0
-        self.subplots = subplots
-        self.super_building = Building.get_super_building('lot-super-building', [subplot.super_building for subplot in self.subplots])
-        attrs = 'area_lot area_useless rec_cov rec_ncov units rec_subplots ca'.split()
-        for attr in attrs:
-            setattr(self, attr, lot_info[attr])
-        self.calc_all()
+        self.useless_subplots = [subplots[n] for n in lot_info['sublotes_atingidos']]
+        self.rec_subplots = [subplots[n] for n in lot_info['sublotes_rec']]
+        self.common_subplots = self.rec_subplots + [subplots[0]]
+        self.unit_subplots = [sub for sub in subplots if sub not in self.common_subplots + self.useless_subplots]
+        self.subplots = self.unit_subplots + self.common_subplots
+        
+        self.area_ri = lot_info['area_ri']
+        self.area= sum(s.area_net for s in self.common_subplots + self.unit_subplots)
+        self.useless_area = sum(s.area_net for s in self.useless_subplots)
+        self.net_area = self.area + self.useless_area
 
-    def calc_all(self):
-        sum_attr = lambda attr : sum(getattr(element, attr) for element in self.subplots)
+        self.units = lot_info['unidades']
+
+        self.rec_ncov = lot_info['rec_desc']
+        self.rec_cov = lot_info['rec_cob']
+        self.rec_net = self.rec_ncov + self.rec_cov
+
         self.super_building = Building.get_super_building('lot-super-building', [subplot.super_building for subplot in self.subplots])
-        self.area_net = sum_attr('area_net')
+        sum_attr = lambda attr : sum(getattr(element, attr) for element in self.subplots)
+        self.ca = lot_info['ca']
         self.area_perm = sum_attr('area_perm')
         self.area_comp = sum_attr('area_comp')
         self.area_ncomp = sum_attr('area_ncomp')
         self.area_proj = sum_attr('area_proj')
-        self.rec_net = self.rec_ncov + self.rec_cov
         self.cm = self._calc_cm()
         self.tos = self.ca * self.cm
-        super().calc_coef()
+
+        self.coef_aprov = self.area_comp/self.area
+        self.taxa_perm = (self.area_perm / self.area) * 100
+        self.taxa_ocp = (self.area_proj / self.area) * 100
+
 
     def _calc_cm(self):
         """Return CM for the lot"""
-        area_recs = sum([self.subplots[i].area_net for i in self.rec_subplots])
-        area_comum = self.subplots[0].area_net
-        cm = self.area_net ** 2 / (self.area_net - area_comum - area_recs)
+        area_comum = sum(sub.area_net for sub in self.common_subplots)
+        cm = self.area / (self.area - area_comum)
         return cm
 
     def write_latex(self, target_dir):

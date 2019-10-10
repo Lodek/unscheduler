@@ -1,8 +1,6 @@
 import unittest
 from building import Building, Story
 
-
-
 class TestStory(unittest.TestCase):
 
     def test_story(self):
@@ -13,6 +11,7 @@ class TestStory(unittest.TestCase):
         self.assertEqual(story.area_ncomp, 10)
         with self.assertRaises(ValueError):
             story.add_area(10, 'whatever')
+        
 
 class TestBuilding(unittest.TestCase):
 
@@ -39,6 +38,5 @@ class TestBuilding(unittest.TestCase):
         self.assertEqual(sup.area_proj, 4)
         
         
-
 if __name__ == '__main__':
     unittest.main()

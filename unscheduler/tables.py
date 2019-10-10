@@ -8,6 +8,10 @@ fmt_area = lambda s : '${:.2f}$ m$^2$'.format(s)
 fmt_perc = lambda s : '${:.2f}$\%'.format(s)
 fmt_float = lambda s : '${:.2f}$'.format(s)
 
+def table_writer(source, p):
+    with p.open('w') as f:
+        f.write(source)
+
 class LatexFormatter:
     """
     Base class with methods to format a table from a list of lists
@@ -50,6 +54,30 @@ class LatexFormatter:
         inserted into template. Optionally passes *args to format call on template"""
         tabular = '\n'.join(self._tabularfy(matrix))
         return self.template.format(*args + [tabular])
+
+
+class SiteFormatter(LatexFormatter):
+    template_path = templates_path / 'story-template.tex'
+    template = template_path.read_text()
+    headers = False
+    title = False
+    def format(self, site):
+        """Format site object into a latex compatible string representing
+        a file ready for compilation"""
+        table = self._build_table(site)
+        return self._get_latex(table)
+
+    def _build_table(self, site):
+        body = []
+        if site.area_ri:
+            body.append(['AREA - R.I.', fmt_area(site.area_ri)])
+            body.append(['AREA REAL TOTAL.', fmt_area(site.area)])
+        else:
+            body.append(['AREA TOTAL.', fmt_area(site.area)])
+        body.append(['AREA ATINGIDA.', fmt_area(site.atingido.area)])
+        body.append(['AREA REMANESCENTE.', fmt_area(site.remanescente.area)])
+        return body
+
 
     
 class StoryFormatter(LatexFormatter):
@@ -121,7 +149,7 @@ class SubAreasFormatter(LatexFormatter):
         for _ in lot.super_building.all_stories():
             header.extend(['COMP', 'N COMP'])
         body = []
-        for s in lot.subplots + [lot]:
+        for s in lot.lands + [lot]:
             row = []
             row.append(s.name.upper())
             for story in s.super_building.all_stories():
@@ -146,14 +174,17 @@ class SubStatsFormatter(LatexFormatter):
     def _build_table(self, lot):
         headers = ['NOME', 'AREA PROJECAO', 'AREA SUBLOTE', 'TAXA OCUPACAO',
                    'COEF.APROVEITAMENTO', 'AREA PERMEAVEL', 'TAXA PERMEABILIDADE']
-        body = [self._gen_row(sub) for sub in lot.subplots + [lot]]
+        body = [self._gen_row(sub) for sub in lot.lands + [lot]]
+        body[-1][3] = '-'
+        body[-1][4] = '-'
+        body[-1][6] = '-'
         return body
 
     @staticmethod
     def _gen_row(s):
         row = [s.name.upper()]
-        row.append(fmt_area(s.area_proj))
-        row.append(fmt_area(s.area_net))
+        row.append(fmt_area(s.super_building.area_proj))
+        row.append(fmt_area(s.area))
         row.append(fmt_perc(s.taxa_ocp))
         row.append(fmt_float(s.coef_aprov))
         row.append(fmt_area(s.area_perm))
@@ -169,29 +200,33 @@ class LotStatsFormatter(LatexFormatter):
     template = template_path.read_text()
     headers = True
     title = False
-    def format(self, lot):
+    def format(self, site, lot):
         """Operate on lot and return the lot-stats.tex file text"""
-        table = self._build_table(lot)
+        table = self._build_table(site, lot)
         return self._get_latex(table)
 
-    def _build_table(self, lot):
+    def _build_table(self, site, lot):
         title = ['ESTATISTICAS', '']
         body = []
-        body.append(['AREA DO LOTE - RI', fmt_area(lot.area_ri)])
-        body.append(['AREA DO LOTE REAL', fmt_area(lot.net_area)])
-        body.append(['AREA DO LOTE ATINGIDA', fmt_area(lot.useless_area)])
-        body.append(['AREA DO LOTE REMANESCENTE', fmt_area(lot.area)])
-        body.append(['AREA TOTAL COMPUTAVEL', fmt_area(lot.area_comp)])
-        body.append(['AREA TOTAL NAO COMPUTAVEL', fmt_area(lot.area_ncomp)])
-        body.append(['AREA PROJECAO', fmt_area(lot.area_proj)])
+        if site.area_ri:
+            body.append(['AREA DO LOTE - RI', fmt_area(site.area_ri)])
+            body.append(['AREA DO LOTE REAL', fmt_area(site.area)])
+        else: 
+            body.append(['AREA DO LOTE', fmt_area(site.area)])
+        body.append(['AREA DO LOTE ATINGIDA', fmt_area(site.atingido.area)])
+        body.append(['AREA DO LOTE REMANESCENTE', fmt_area(site.remanescente.area)])
+
+        body.append(['AREA TOTAL COMPUTAVEL', fmt_area(lot.super_building.area_comp)])
+        body.append(['AREA TOTAL NAO COMPUTAVEL', fmt_area(lot.super_building.area_ncomp)])
+        body.append(['AREA PROJECAO', fmt_area(lot.super_building.area_proj)])
         body.append(['TAXA DE OCUPACAO', fmt_perc(lot.taxa_ocp)])
         body.append(['COEFICIENTE DE APROVEITAMENTO', fmt_float(lot.coef_aprov)])
         body.append(['AREA PERMEAVEL', fmt_area(lot.area_perm)])
         body.append(['COEFICIENTE PERMEABILIDADE', fmt_perc(lot.taxa_perm)])
         body.append(['NUMERO DE UNIDADES', '{} UN'.format(lot.units)])
-        body.append(['RECREACAO DESCOBERTA', fmt_area(lot.rec_ncov)])
-        body.append(['RECREACAO COBERTA', fmt_area(lot.rec_cov)])
-        body.append(['RECREACAO TOTAL', fmt_area(lot.rec_net)])
+        body.append(['RECREACAO DESCOBERTA', fmt_area(lot.rec_desc)])
+        body.append(['RECREACAO COBERTA', fmt_area(lot.rec_cob)])
+        body.append(['RECREACAO TOTAL', fmt_area(lot.rec)])
         return [title] + body
 
 class TOSFormatter(LatexFormatter):
@@ -202,7 +237,8 @@ class TOSFormatter(LatexFormatter):
     headers = False
     def format(self, lot):
         """Operate on lot and return the tos-stats.tex file text"""
-        args = [fmt_float(lot.cm), fmt_perc(lot.tos)]
+        cm = lot.calc_cm()
+        args = [fmt_float(cm), fmt_perc(50*cm)]
         return self._get_latex([], args=args)
 
     
@@ -218,5 +254,3 @@ class SheetChartFormatter(LatexFormatter):
         init_month, init_year = project_info['inicio'].split('/')
         args = [init_month, init_year, project_info['titulo'], project_info['prop']]
         return self._get_latex([], args=args)
-
-   

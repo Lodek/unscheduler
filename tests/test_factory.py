@@ -1,7 +1,10 @@
 from pathlib import Path
 import unittest
-from factory import Parser, BuildingFactory, SubplotFactory
+from factory import Parser, SiteFactory, BuildingFactory, SubplotFactory, SiteFactory
 
+schedules = Path('samples')
+
+aux_files = ''
 
 class TestParser(unittest.TestCase):
 
@@ -37,6 +40,18 @@ class TestBuildingFactory(unittest.TestCase):
         self.assertEqual(b.area_comp, 10)
         self.assertEqual(b.area_ncomp, 5)
 
+class SiteFactoryTester(unittest.TestCase):
+
+    def test_factory(self):
+        p = schedules / 'topografico.txt'
+        site = SiteFactory(p.read_text())
+        area_r = 10
+        area_a = 5
+        self.assertEqual(site.remanescente.area, area_r)
+        self.assertEqual(site.atingido.area, area_a)
+        self.assertEqual(site.area, area_r + area_a)
+        
+
 class TestSubplotFacotry(unittest.TestCase):
 
     def test_get(self):
@@ -46,6 +61,7 @@ class TestSubplotFacotry(unittest.TestCase):
                                                p_perm.read_text(), {})
         self.assertEqual(len(subplots), 3)
         print(subplots)
+
 
 
 if __name__ == '__main__':

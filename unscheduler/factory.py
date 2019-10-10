@@ -4,7 +4,7 @@ from Archicad's exported schedule.
 """
 import collections, logging, re
 from building import Story, Building
-from land import Lot, Subplot
+from land import Land, Site
 
 logger = logging.getLogger(__name__)
 
@@ -83,14 +83,27 @@ class BuildingFactory:
         building = Building(model, list(stories.values()))
         return building
 
+
+    @staticmethod
+    def get_buildings(texts, models):
+        """Return list of buidings, as described by def, writes buildings .tex"""
+        buildings = []
+        for model in models:
+            m = f'{model}.txt'
+            buildings.append(BuildingFactory.get_building(model, texts[m]))
+        buildings.append(BuildingFactory.get_null_building())
+        return buildings
+
     @staticmethod
     def get_null_building():
         return Building.get_null_building()
+
 
 class SubplotFactory:
     """
     
     """
+
     @staticmethod
     def get_subplots(txt_subplots, txt_perm, relations):
         """Receive raw text for subplot schedules, raw text for permeable
@@ -98,13 +111,13 @@ class SubplotFactory:
         between subplot id and buildings"""
         logger.info('Call to get subplots')
         table = SubplotFactory._parse_subplots_table(txt_subplots)
-        subplots = {record.id : Subplot(*record) for record in table}
+        subplots = {record.id : Land(*record) for record in table}
         logger.debug('Subplots from table: {}'.format(subplots))
         for id, buildings in relations.items():
             subplots[id].buildings = buildings
         SubplotFactory.parse_perm(txt_perm, subplots)
         for subplot in subplots.values():
-            subplot.calc_all()
+            subplot.update()
         result = sorted(subplots.values(), key=lambda subplot: subplot.id)
         logger.info('Result from subplots: {}'.format(result))
         return result
@@ -140,3 +153,13 @@ class SubplotFactory:
                 table_new.append(cls(record.id, name, record.area))
         logger.debug('Result: {}'.format(table_new))
         return table_new
+
+    
+
+def SiteFactory(text, defs):
+    fields = 'id area'.split()
+    records = Parser.parse(text, fields)
+    remanescente = Land(0, 'Remanescente', records[0].area)
+    atingido = Land(1, 'Atingido', records[1].area)
+    site = Site.from_lands(0, 'topografico', [remanescente, atingido], **defs.topografico._asdict())
+    return site

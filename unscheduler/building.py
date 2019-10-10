@@ -58,6 +58,9 @@ class Building():
     def total(self):
         return self.super_story.total
 
+    def latexify(self):
+        return self.formatter.format(self)
+
     def write_latex(self, target_dir):
         target = target_dir / '{}.tex'.format(self.model)
         latex = self.formatter.format(self)
@@ -119,6 +122,9 @@ class Story():
     @property
     def total(self):
         return self.area_comp + self.area_ncomp
+
+    def latexify(self):
+        return self.formatter.format(self)
 
     def write_latex(self, target_dir):
         target = target_dir / 'story-{}.tex'.format(self.id)

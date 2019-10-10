@@ -44,5 +44,6 @@ class TestProjectInfo(TestCase):
         self.assertEqual(self.pi.topografico.quadricula, quadricula)
         self.assertEqual(self.pi.topografico.ind_fiscal, ind_fiscal)
 
+
 if __name__ == '__main__':
     main()       
